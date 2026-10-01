@@ -13,27 +13,27 @@ def index():
     role = session.get("role")
 
     if role == "guest":
-        return redirect(url_for("dashboard.guest_dashbaord"))
+        return redirect(url_for("dashboard.guest_dashboard"))
     elif role == "receptionist":
         return redirect(url_for("dashboard.receptionist_dashboard"))
     elif role == "housekeeper":
         return redirect(url_for("dashboard.housekeeper_dashboard"))
     elif role == "manager":
-        return redirect(url_for("dashboard.manager_dashbaord"))
+        return redirect(url_for("dashboard.manager_dashboard"))
     else:
         return redirect(url_for("auth.login"))
 
 
 @dashboard_bp.route("/home/guest", methods=["GET"])
-@login_required
+@role_required("guest")
 def guest_dashboard():
-    db = get_db()
+    return render_template("dashboard/guest.html")
 
 
 @dashboard_bp.route("/home/receptionist", methods=["GET"])
 @role_required("receptionist")
 def receptionist_dashboard():
-    db = get_db()
+    return render_template("dashboard/receptionist.html")
 
 
 
@@ -47,4 +47,4 @@ def housekeeper_dashboard():
 @dashboard_bp.route("/home/manager", methods=["GET"])
 @role_required("manager")
 def manager_dashboard():
-    db = get_db()
+    return render_template("dashboard/manager.html")

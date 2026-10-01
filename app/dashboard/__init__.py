@@ -1,7 +1,7 @@
 from flask import Blueprint
 
 
-dashboard_bp = Blueprint("dashbaord", __name__)
+dashboard_bp = Blueprint("dashboard", __name__)
 
 
 def register_routes():
