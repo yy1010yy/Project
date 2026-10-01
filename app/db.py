@@ -1,16 +1,28 @@
 import sqlite3
-from flask import g
+import re
+from pathlib import Path
+
+from flask import current_app, g
 
 
 def get_db():
     if "db" not in g:
-        g.db = sqlite3.connect("database/hotel.db")
+        database_path = current_app.config.get(
+            "DATABASE", Path(__file__).resolve().parent / "database" / "hotel.db"
+        )
+        g.db = sqlite3.connect(database_path)
+        g.db.create_function(
+            "regexp", 2,
+            lambda pattern, value: int(
+                isinstance(value, str) and re.fullmatch(pattern, value) is not None
+            ),
+        )
 
         # enable foreign key enforcement 
         g.db.execute("PRAGMA foreign_keys = ON")
         
         # access db columns by names like in dictionary
-        g.db.row_factory = sqlite3.ROW
+        g.db.row_factory = sqlite3.Row
     return g.db
 
 

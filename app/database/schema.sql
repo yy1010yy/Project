@@ -3,13 +3,13 @@ CREATE TABLE IF NOT EXISTS users(
     email TEXT NOT NULL CHECK(email REGEXP '^[A-Za-z0-9._%+-]+@[A-Za-z0-9.-]+\.[A-Za-z]{2,}$'),
     username TEXT NOT NULL,
     hashed_password TEXT NOT NULL,
-    user_role TEXT NOT NULL CHECK(role IN ('guest', 'receptionist', 'housekeeper','manager')),
+    user_role TEXT NOT NULL CHECK(user_role IN ('guest', 'receptionist', 'housekeeper','manager')),
     must_change_password INTEGER NOT NULL CHECK(must_change_password IN (0, 1)) DEFAULT 0,
     is_active INTEGER NOT NULL CHECK(is_active IN (0, 1)) DEFAULT 1
 );
 
-CREATE UNIQUE INDEX email on users(email);
-CREATE INDEX username ON users(username);
+CREATE UNIQUE INDEX IF NOT EXISTS email on users(email);
+CREATE INDEX IF NOT EXISTS username ON users(username);
 
 CREATE TABLE IF NOT EXISTS rooms(
     id INTEGER PRIMARY KEY AUTOINCREMENT NOT NULL,
@@ -31,7 +31,7 @@ CREATE TABLE IF NOT EXISTS bookings(
     FOREIGN KEY (guest_id) references guests(id),
     FOREIGN KEY (room_id) references rooms(id),
     CONSTRAINT check_dates CHECK(check_out_date > check_in_date)
-)
+);
 
 CREATE TABLE IF NOT EXISTS guests(
     id INTEGER PRIMARY KEY AUTOINCREMENT NOT NULL,

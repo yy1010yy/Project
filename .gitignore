@@ -1,8 +1,8 @@
-<<<<<<< HEAD
 # database
-*.db 
-
-=======
+*.db
+*.db-journal
+*.db-wal
+*.db-shm
 # Byte-compiled / optimized / DLL files
 __pycache__/
 *.py[codz]
@@ -221,4 +221,3 @@ __marimo__/
 
 # Streamlit
 .streamlit/secrets.toml
->>>>>>> 6e8d92263512666b0b6c9cdccffdd6fc71ddd17a
