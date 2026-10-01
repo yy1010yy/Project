@@ -54,7 +54,7 @@ CREATE TABLE IF NOT EXISTS employee_id_counter(
 );
 
 
-INSERT INTO employee_id_counter (employee_role, id_counter)
+INSERT OR IGNORE INTO employee_id_counter (employee_role, id_counter)
 VALUES
     ("manager", 1),
     ("receptionist", 1),

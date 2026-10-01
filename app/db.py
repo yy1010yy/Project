@@ -4,8 +4,11 @@ from flask import g
 
 def get_db():
     if "db" not in g:
-        g.db = sqlite3.connect("../hotel.db")
+        g.db = sqlite3.connect("database/hotel.db")
 
+        # enable foreign key enforcement 
+        g.db.execute("PRAGMA foreign_keys = ON")
+        
         # access db columns by names like in dictionary
         g.db.row_factory = sqlite3.ROW
     return g.db
