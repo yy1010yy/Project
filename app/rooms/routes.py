@@ -52,6 +52,9 @@ def search_rooms():
     if checkout_date <= checkin_date:
         return jsonify(success=False, error="Check out date must be after check in date"), 400
 
+    requested_check_in_date = checkin_date.isoformat()
+    requested_check_out_date = checkout_date.isoformat()
+
     # dates are valid -> use back original iso-strings to be stored in db
     # unavailable: (existing checkin < new check out) AND (existing check out > new check in)
 

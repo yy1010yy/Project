@@ -27,11 +27,11 @@ def login():
         if not email:
             return "error: must provide email", 400
         if not password:
-            return "error: must provide password", 401
+            return "error: must provide password", 400
 
         # validify email
         if not isValidEmail(email):
-            return "error: invalid email format", 401
+            return "error: invalid email format", 400
 
         # query database for user
         db = get_db()
@@ -39,7 +39,7 @@ def login():
 
         # ensure user's email exists and password is correct
         if len(user_details) != 1 or not check_password_hash(user_details[0]["hashed_password"], password):
-            return "error: invalid password or email", 403
+            return "error: invalid password or email", 401
 
 
 
@@ -95,17 +95,17 @@ def register():
 
         # check for empty input fields
         if not username or username.strip() == "":
-            return "error: must provide username", 401
+            return "error: must provide username", 400
         if not email:
-            return "error: must provide email", 401
+            return "error: must provide email", 400
         if not password:
             return "error: must provide password", 400
         if not confirm_password:
-            return "error: must confirm password", 401
+            return "error: must confirm password", 400
 
         # checks email validity
         if not isValidEmail(email):
-            return "error: invalid email format", 401
+            return "error: invalid email format", 400
 
         # ensure password matches:
         if password != confirm_password:
@@ -118,7 +118,7 @@ def register():
         existing_user = db.execute("SELECT * FROM users WHERE email = ?", (email,)).fetchone()
         if existing_user:
             flash("email already registered")
-            return "error: email already registered", 400
+            return "error: email already registered", 409
 
         # hash submitted password
         hashed_password = generate_password_hash(password)
@@ -175,19 +175,19 @@ def quick_register():
         return jsonify({
             "success": False,
             "error": "Must provide username"
-            }), 401
+            }), 400
     if not email:
         return jsonify({
             "success": False,
             "error": "Must provide email"
-            }), 401
+            }), 400
 
     # checks email validity
     if not isValidEmail(email):
-        return ({
+        return jsonify({
             "success": False,
             "error": "Invalid email format"
-            }), 401
+            }), 400
 
 
     # generate and hash temporary password
@@ -269,14 +269,14 @@ def change_password():
             return render_template(
                 "auth/change_password.html",
                 error="All fields are required."
-            )
+            ), 400
 
         # Check new password confirmation
         if new_password != confirm_password:
             return render_template(
                 "auth/change_password.html",
                 error="New passwords do not match."
-            )
+            ), 400
 
         # query database for user
         db = get_db()
@@ -293,7 +293,7 @@ def change_password():
             return render_template(
                 "auth/change_password.html",
                 error="Current password is incorrect."
-            )
+            ), 400
 
 
         # Don't allow the same password
@@ -301,7 +301,7 @@ def change_password():
             return render_template(
                 "auth/change_password.html",
                 error="New password must be different from your current password."
-            )
+            ), 400
 
         # Hash new password
         new_password_hash = generate_password_hash(new_password)

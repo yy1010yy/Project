@@ -36,13 +36,17 @@ changes; do not delete it or blindly rerun initialization as a migration.
   its transaction on duplicates, and remembers the new guest for staff confirmation.
 - Protected routes reject deactivated accounts and refresh roles from the database,
   so staff edits also take effect for existing sessions.
+- Validation errors return 400, invalid login credentials return 401, and an already
+  registered email returns 409. Invalid password-change forms retain their template
+  but return 400 instead of reporting a successful HTTP response.
 
 ## Rooms and bookings
 
 - The rooms homepage names its template and the search endpoint is valid.
 - Status/type validation matches `out of service` and `business suite` in the schema.
 - Room creation reports success. Editing saves the numeric price, with nonfinite
-  prices rejected. Search validation returns JSON consistently.
+  prices rejected. Search validation returns JSON consistently and normalizes dates
+  before availability comparisons, matching the booking submission routes.
 - Booking initialization defines the feature blueprint and imports both route files.
 - Existing-guest GET initializes an empty result list; POST search returns results.
   SQL names, quoting, partial matching, parameter binding, and missing input are fixed.
@@ -58,7 +62,8 @@ changes; do not delete it or blindly rerun initialization as a migration.
 - Staff queries/inserts/updates use schema column names; query aliases keep `role`
   available to templates. Route parameters are normalized.
 - Staff creation validates email. Editing checks username/email conflicts consistently
-  with creation; database failures roll back and return a server error.
+  with creation; database failures roll back and return a server error. Conflict checks
+  are repeated under the write lock so concurrent requests cannot bypass them.
 - Dashboard blueprint and redirect spelling is corrected. Guest, receptionist, and
   manager handlers name their templates instead of falling through without a response.
 

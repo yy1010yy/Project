@@ -19,6 +19,8 @@ class RoomTests(RouteTestCase):
             db.commit()
         query = {"check_in": self.checkin, "check_out": self.checkout}
         self.assertEqual(self.client.get("/rooms/search", query_string=query).json["rooms"], [])
+        compact_query = {key: value.replace("-", "") for key, value in query.items()}
+        self.assertEqual(self.client.get("/rooms/search", query_string=compact_query).json["rooms"], [])
         query = {"check_in": self.checkout, "check_out": "2099-12-31"}
         self.assertEqual(len(self.client.get("/rooms/search", query_string=query).json["rooms"]), 1)
 

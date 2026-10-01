@@ -31,6 +31,7 @@ class AuthTests(RouteTestCase):
             "current_password": "original-password", "new_password": "replacement-password",
             "confirm_password": "different-password",
         })
+        self.assertEqual(response.status_code, 400)
         self.assertIn(b"do not match", response.data)
         response = self.client.post("/change_password", data={
             "current_password": "original-password", "new_password": "replacement-password",
@@ -43,7 +44,7 @@ class AuthTests(RouteTestCase):
     def test_register_creates_guest_profile_and_rejects_duplicates(self):
         data = {"username": "New Guest", "email": "new@example.com", "password": "secret", "confirm_password": "secret"}
         self.assertEqual(self.client.post("/register", data=data).location, "/login")
-        self.assertEqual(self.client.post("/register", data=data).status_code, 400)
+        self.assertEqual(self.client.post("/register", data=data).status_code, 409)
         with self.app.app_context():
             self.assertEqual(get_db().execute("SELECT COUNT(*) FROM guests").fetchone()[0], 2)
 
@@ -68,3 +69,7 @@ class AuthTests(RouteTestCase):
         for path, template in [("/login", "auth/login.html"), ("/register", "auth/register.html")]:
             self.assertEqual(self.client.get(path).status_code, 200)
             self.assertEqual(self.templates[-1][0], template)
+
+    def test_validation_and_bad_credentials_use_distinct_error_statuses(self):
+        self.assertEqual(self.client.post("/login", data={"email": "guest@example.com"}).status_code, 400)
+        self.assertEqual(self.client.post("/login", data={"email": "guest@example.com", "password": "wrong"}).status_code, 401)

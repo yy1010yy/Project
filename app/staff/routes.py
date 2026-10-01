@@ -106,6 +106,15 @@ def create_staff():
             # Lock database for the entire operation.
             db.execute("BEGIN IMMEDIATE")
 
+            # Another request may have created this username since validation.
+            existing = db.execute(
+                "SELECT id FROM users WHERE username = ? OR email = ?",
+                (username, email),
+            ).fetchone()
+            if existing:
+                db.rollback()
+                return jsonify(success=False, error="Username or email is already in use."), 409
+
             # Assign employee ID.
             employee_id = assign_employee_id(db, role)
 
@@ -278,6 +287,15 @@ def edit_staff(employee_id):
         values.append(staff["user_id"])
 
         try:
+
+            db.execute("BEGIN IMMEDIATE")
+            existing = db.execute(
+                "SELECT id FROM users WHERE id != ? AND (email = ? OR username = ?)",
+                (staff["user_id"], email, username),
+            ).fetchone()
+            if existing:
+                db.rollback()
+                return jsonify(success=False, error="Username or email is already in use."), 409
 
             db.execute(f"""
                 UPDATE users

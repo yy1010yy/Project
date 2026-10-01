@@ -1,3 +1,5 @@
+from concurrent.futures import ThreadPoolExecutor
+
 from app.db import get_db
 from tests.support import RouteTestCase
 
@@ -44,3 +46,16 @@ class StaffTests(RouteTestCase):
         self.assertEqual(self.client.post("/staff/edit/missing", data={"username": "New"}).status_code, 404)
         self.login_as()
         self.assertEqual(self.client.get("/staff/").status_code, 403)
+
+    def test_simultaneous_staff_creation_cannot_duplicate_a_username(self):
+        def create(index):
+            client = self.app.test_client()
+            with client.session_transaction() as session:
+                session.update(user_id=3, role="manager", staff_id=2)
+            return client.post("/staff/create", data={
+                "username": "Concurrent Staff", "email": f"concurrent{index}@example.com",
+                "role": "receptionist",
+            }).status_code
+        with ThreadPoolExecutor(max_workers=2) as pool:
+            statuses = list(pool.map(create, range(2)))
+        self.assertEqual(sorted(statuses), [201, 409])
