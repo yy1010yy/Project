@@ -19,13 +19,13 @@ def login():
 
     # user submits login details via POST
     if request.method == "POST":
-        email = request.form.get("email")
+        email = request.form.get("email", "").strip().lower()
         password = request.form.get("password")
 
 
         # check for empty input fields
         if not email:
-            return "error: must provide username", 401
+            return "error: must provide email", 400
         if not password:
             return "error: must provide password", 401
 
@@ -38,21 +38,15 @@ def login():
         user_details = db.execute("SELECT * FROM users WHERE email = ? AND is_active = 1", (email,)).fetchall()
 
         # ensure user's email exists and password is correct
-        if len(user_details) != 1 or not check_password_hash(user_details[0]["password"], password):
+        if len(user_details) != 1 or not check_password_hash(user_details[0]["hashed_password"], password):
             return "error: invalid password or email", 403
-
-
-
-        # if user is assigned temporary password before this, prompt user to change password
-        if user_details[0]["must_change_password"] == 1:
-            return redirect(url_for("auth.change_password"))
 
 
 
         # separate id by role
         # store guest id
         if user_details[0]["user_role"] == "guest":
-            guest = db.execute("SELECT id FROM guests WHERE user_id = ?", (user_details[0]["id"]), ).fetchone()
+            guest = db.execute("SELECT id FROM guests WHERE user_id = ?", (user_details[0]["id"],)).fetchone()
 
             if guest is None:
                 abort(403)
@@ -60,7 +54,7 @@ def login():
             session["guest_id"] = guest["id"]
         # store staff id
         elif user_details[0]["user_role"] in ["receptionist", "manager", "housekeeper"]:
-            staff = db.execute("SELECT id FROM staff WHERE user_id = ?", (user_details[0]["id"]), ).fetchone()
+            staff = db.execute("SELECT id FROM staff WHERE user_id = ?", (user_details[0]["id"],)).fetchone()
 
             if staff is None:
                 abort(403)
@@ -71,13 +65,18 @@ def login():
         session["user_id"] = user_details[0]["id"]
         session["role"] = user_details[0]["user_role"]
 
+        # Establish the session before entering the protected password-change page.
+        if user_details[0]["must_change_password"] == 1:
+            flash("Please change your temporary password before continuing.", "info")
+            return redirect(url_for("auth.change_password"))
+
         # redirect to homepage after user successfully logs in
         return redirect(url_for("dashboard.index"))
 
 
     # user visits log in page
     elif request.method == "GET":
-        return render_template()
+        return render_template("auth/login.html")
 
 
 
@@ -88,8 +87,8 @@ def register():
     # user reaches via POST (by submitting a form)
     if request.method == "POST":
 
-        username = request.form.get("username")
-        email = request.form.get("email")
+        username = request.form.get("username", "").strip()
+        email = request.form.get("email", "").strip().lower()
         password = request.form.get("password")
         confirm_password = request.form.get("confirm_password")
 
@@ -100,7 +99,7 @@ def register():
         if not email:
             return "error: must provide email", 401
         if not password:
-            return "error: must provide username", 401
+            return "error: must provide password", 400
         if not confirm_password:
             return "error: must confirm password", 401
 
@@ -137,7 +136,7 @@ def register():
             return redirect(url_for("auth.login"))
         # database constraint violated
         except sqlite3.IntegrityError:
-            db.rolllback()
+            db.rollback()
             flash("email already exists", "danger")
             return redirect(url_for("auth.register"))
         except sqlite3.Error:
@@ -149,7 +148,7 @@ def register():
 
     # user vists register page via GET
     elif request.method == "GET":
-            return render_template()
+            return render_template("auth/register.html")
 
 
 @auth_bp.route("/logout", methods=["GET"])
@@ -167,8 +166,8 @@ def logout():
 @auth_bp.route("/quick-register", methods=["POST"])
 @role_required("receptionist", "manager")
 def quick_register():
-    username = request.form.get("username")
-    email = request.form.get("email")
+    username = request.form.get("username", "").strip()
+    email = request.form.get("email", "").strip().lower()
 
 
     # check for empty input fields
@@ -205,6 +204,7 @@ def quick_register():
         existing_guest = db.execute("SELECT * FROM users WHERE email = ?", (email,)).fetchone()
 
         if existing_guest:
+            db.rollback()
             return jsonify({
                 "success": False,
                 "error": "An account with this email is already registered"
@@ -214,17 +214,18 @@ def quick_register():
         cursor = db.execute("""INSERT INTO users
                                 (username, email, hashed_password, user_role, must_change_password)
                                 VALUES (?, ?, ?, ?, 1)
-                            """, (username, email, temporary_password_hash, 'guest'))
+                            """, (username, email, temporary_password_hash, "guest"))
 
         user_id = cursor.lastrowid
 
         # create guest profile linked to user id
-        cursor = db.execute("INSERT INTO guests (user_id) VALUES ?", (user_id,))
+        cursor = db.execute("INSERT INTO guests (user_id) VALUES (?)", (user_id,))
 
         guest_id = cursor.lastrowid
 
         # save changes
         db.commit()
+        session["staff_booking_guest_id"] = guest_id
 
     except sqlite3.IntegrityError:
         db.rollback()
@@ -260,7 +261,7 @@ def change_password():
     if request.method == "POST":
         current_password = request.form.get("current_password")
         new_password = request.form.get("new_password")
-        confirm_password = request.form.get("new_password")
+        confirm_password = request.form.get("confirm_password")
 
 
         # Check empty fields
@@ -288,7 +289,7 @@ def change_password():
 
 
         # Check current password
-        if not check_password_hash(user["password_hash"], current_password):
+        if not check_password_hash(user["hashed_password"], current_password):
             return render_template(
                 "auth/change_password.html",
                 error="Current password is incorrect."
@@ -296,7 +297,7 @@ def change_password():
 
 
         # Don't allow the same password
-        if check_password_hash(user["password_hash"], new_password):
+        if check_password_hash(user["hashed_password"], new_password):
             return render_template(
                 "auth/change_password.html",
                 error="New password must be different from your current password."
@@ -306,28 +307,23 @@ def change_password():
         new_password_hash = generate_password_hash(new_password)
 
 
-        # Update password
-        db.execute(
-            """
-            UPDATE users
-            SET password_hash = ?
-            WHERE id = ?
-            """,
-            (new_password_hash, session["user_id"])
-        )
+        try:
+            db.execute(
+                """UPDATE users
+                   SET hashed_password = ?, must_change_password = 0
+                   WHERE id = ?""",
+                (new_password_hash, session["user_id"]),
+            )
+            db.commit()
+        except sqlite3.Error:
+            db.rollback()
+            return render_template(
+                "auth/change_password.html",
+                error="Unable to change your password. Please try again.",
+            ), 500
 
-        # If this was a temporary password, clear the flag
-        db.execute(
-            """
-            UPDATE users
-            SET must_change_password = 0
-            WHERE id = ?
-            """,
-            (session["user_id"],)
-        )
-
-        db.commit()
-
+        session.clear()
+        flash("Password changed. Please log in with your new password.", "success")
         return redirect(url_for("auth.login"))
 
     # user enters change password page via GET
