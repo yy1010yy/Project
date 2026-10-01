@@ -4,7 +4,7 @@ from datetime import date
 class BookingValidationError(ValueError):
     def __init__(self, message, status_code=400):
         super().__init__(message)
-        self.status_code = status_code
+        self.status_code = status_code                                                                                                                                                                                                                                                                          
 
 
 def validate_booking_details(room_id, checkin, checkout):
