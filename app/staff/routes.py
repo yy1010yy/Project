@@ -25,7 +25,7 @@ def staff_list():
             s.employee_id,
             u.username,
             u.email,
-            u.role,
+            u.user_role AS role,
             u.is_active
         FROM staff AS s
         JOIN users AS u
@@ -65,6 +65,9 @@ def create_staff():
                 "success": False,
                 "error": "Email is required."
                 }), 400
+
+        if not isValidEmail(email):
+            return jsonify(success=False, error="Invalid email."), 400
 
         if role not in VALID_ROLES:
             return jsonify({
@@ -111,8 +114,8 @@ def create_staff():
                 INSERT INTO users (
                     username,
                     email,
-                    password_hash,
-                    role,
+                    hashed_password,
+                    user_role,
                     must_change_password
                 )
                 VALUES (?, ?, ?, ?, ?)
@@ -148,9 +151,9 @@ def create_staff():
                 "error": "Unable to create staff account."
             }), 409
 
-        except Exception:
+        except sqlite3.Error:
             db.rollback()
-            raise
+            return jsonify(success=False, error="Unable to create staff account."), 500
 
         return jsonify({
             "success": True,
@@ -164,7 +167,7 @@ def create_staff():
 
 
 
-@staff_bp.route("/edit/<string: employee_id>", methods=["GET", "POST"])
+@staff_bp.route("/edit/<string:employee_id>", methods=["GET", "POST"])
 @role_required("manager")
 def edit_staff(employee_id):
 
@@ -178,7 +181,7 @@ def edit_staff(employee_id):
                 s.employee_id,
                 u.username,
                 u.email,
-                u.role
+                u.user_role AS role
             FROM staff AS s
             JOIN users AS u
                 ON s.user_id = u.id
@@ -232,6 +235,7 @@ def edit_staff(employee_id):
 
         # Email
         if email is not None:
+            email = email.strip().lower()
 
             if not isValidEmail(email):
                 return jsonify({
@@ -253,7 +257,7 @@ def edit_staff(employee_id):
                     "error": "Invalid staff role."
                 }), 400
 
-            updates.append("role = ?")
+            updates.append("user_role = ?")
             values.append(role)
 
         # Nothing was provided
@@ -263,24 +267,13 @@ def edit_staff(employee_id):
                 "error": "No changes provided."
             }), 400
 
-        # Check email conflicts
-        if email is not None:
-
-            existing = db.execute("""
-                SELECT id
-                FROM users
-                WHERE email = ?
-                AND id != ?
-            """, (
-                email,
-                staff["user_id"]
-            )).fetchone()
-
-            if existing:
-                return jsonify({
-                    "success": False,
-                    "error": "Username or email is already in use."
-                }), 409
+        # Apply the same username/email conflict checks used during creation.
+        existing = db.execute(
+            "SELECT id FROM users WHERE id != ? AND (email = ? OR username = ?)",
+            (staff["user_id"], email, username),
+        ).fetchone()
+        if existing:
+            return jsonify(success=False, error="Username or email is already in use."), 409
 
         values.append(staff["user_id"])
 
@@ -311,11 +304,11 @@ def edit_staff(employee_id):
             return jsonify({
                 "success": False,
                 "error": "An unexpected server error occured."
-            }), 400
+            }), 500
 
 
 
-@staff_bp.route("/deactivate/<string: employee_id>", methods=["POST"])
+@staff_bp.route("/deactivate/<string:employee_id>", methods=["POST"])
 @role_required("manager")
 def deactivate_staff(employee_id):
 
@@ -357,13 +350,12 @@ def deactivate_staff(employee_id):
             "error": "Staff member is already inactive."
         }), 409
 
-    db.execute("""
-        UPDATE users
-        SET is_active = 0
-        WHERE id = ?
-    """, (staff["user_id"],))
-
-    db.commit()
+    try:
+        db.execute("UPDATE users SET is_active = 0 WHERE id = ?", (staff["user_id"],))
+        db.commit()
+    except sqlite3.Error:
+        db.rollback()
+        return jsonify(success=False, error="Unable to deactivate the employee."), 500
 
     return jsonify({
         "success": True,
