@@ -1,4 +1,4 @@
-from flask import flash, jsonify, request
+from flask import flash, jsonify, render_template, request
 
 from app.db import get_db
 from app.utils.helpers import login_required, role_required
@@ -7,44 +7,50 @@ from . import rooms_bp
 
 from datetime import date
 import sqlite3
+import math
 
 
-ALLOWED_STATUSES = ["clean", "dirty", "maintenance", "outofservice"]
-ALLOWED_TYPES = ["standard", "deluxe", "family", "businesssuite"]
+ALLOWED_STATUSES = ["clean", "dirty", "maintenance", "out of service"]
+ALLOWED_TYPES = ["standard", "deluxe", "family", "business suite"]
 
 @rooms_bp.route("/")
 @login_required
 def rooms():
 
     # homepage to search for rooms
+    return render_template("rooms/index.html")
 
 
 
-@rooms_bp.route("/search", methods=["GET"])
+@rooms_bp.route("/search", methods=["GET"], endpoint="search")
 @login_required
-def search_roooms():
+def search_rooms():
 
     # get details from guest's search
     room_type = request.args.get("roomType")
+    if room_type:
+        room_type = room_type.strip().lower()
+        if room_type not in ALLOWED_TYPES:
+            return jsonify(success=False, error="Invalid room type"), 400
     requested_check_in_date = request.args.get("check_in")
     requested_check_out_date = request.args.get("check_out")
 
     # check if dates are provided
     if not requested_check_in_date or not requested_check_out_date:
-        return "error: please provide check in and check out dates", 400
+        return jsonify(success=False, error="Please provide check in and check out dates"), 400
 
     # convert dates into python objects for comparison
     try:
         checkin_date = date.fromisoformat(requested_check_in_date)
         checkout_date = date.fromisoformat(requested_check_out_date)
     except ValueError:
-        return "error: invalid date", 400
+        return jsonify(success=False, error="Invalid date"), 400
 
     # verify check in and check out dates
     if checkin_date < date.today():
-        return "error: check in date cannot be in the past", 400
+        return jsonify(success=False, error="Check in date cannot be in the past"), 400
     if checkout_date <= checkin_date:
-        return "error: check out date must be after check in date", 400
+        return jsonify(success=False, error="Check out date must be after check in date"), 400
 
     # dates are valid -> use back original iso-strings to be stored in db
     # unavailable: (existing checkin < new check out) AND (existing check out > new check in)
@@ -101,6 +107,15 @@ def add_rooms():
             "error": "All fields are required"
             }), 400
 
+    try:
+        room_number = int(room_number)
+        if room_number <= 0:
+            raise ValueError
+    except ValueError:
+        return jsonify(success=False, error="Room number must be a positive integer"), 400
+    room_status = room_status.strip().lower()
+    room_type = room_type.strip().lower()
+
     # verify room status
     if room_status.strip().lower() not in ALLOWED_STATUSES:
         return jsonify({
@@ -118,7 +133,7 @@ def add_rooms():
     # verify room price
     try:
         room_price = float(room_price)
-        if room_price < 0:
+        if not math.isfinite(room_price) or room_price < 0:
             raise ValueError
     except ValueError:
         return jsonify({
@@ -143,7 +158,7 @@ def add_rooms():
         db.execute("INSERT INTO rooms (room_number, room_physical_status, room_type, room_price) VALUES (?, ?, ?, ?)", (room_number, room_status, room_type, room_price))
         db.commit()
         return jsonify({
-            "success": False,
+            "success": True,
             "message": "Room succesfully added"
             }), 201
 
@@ -154,10 +169,13 @@ def add_rooms():
             "success": False,
             "error": "Room already exists"
             }), 400
+    except sqlite3.Error:
+        db.rollback()
+        return jsonify(success=False, error="Unable to add the room"), 500
 
 
 
-@rooms_bp.route("/edit/<int: room_id>", methods=["POST"])
+@rooms_bp.route("/edit/<int:room_id>", methods=["POST"])
 @role_required("receptionist", "manager")
 def edit_rooms(room_id):
     # gather data
@@ -177,6 +195,7 @@ def edit_rooms(room_id):
 
     # check for room status
     if room_status:
+        room_status = room_status.strip().lower()
 
         # verify room status
         if room_status.strip().lower() not in ALLOWED_STATUSES:
@@ -195,7 +214,7 @@ def edit_rooms(room_id):
         # ensure price is non-negative real number
         try:
             price = float(room_price)
-            if price < 0:
+            if not math.isfinite(price) or price < 0:
                 raise ValueError
         except ValueError:
             return jsonify({
@@ -205,10 +224,11 @@ def edit_rooms(room_id):
 
         # append to query and parameter
         updates.append("room_price = ?")
-        params.append("price")
+        params.append(price)
 
     # join final query
-    query = f"UPDATE rooms SET {", ".join(updates)} WHERE id = ?"
+    set_clause = ", ".join(updates)
+    query = f"UPDATE rooms SET {set_clause} WHERE id = ?"
     params.append(room_id)
 
     # makes DB connection
@@ -225,6 +245,9 @@ def edit_rooms(room_id):
             "success": False,
             "error": "Database constraint violation occurred during update."
             }), 400
+    except sqlite3.Error:
+        db.rollback()
+        return jsonify(success=False, error="Unable to update the room"), 500
 
     # verify if any row was matched and updated
     if cursor.rowcount == 0:
