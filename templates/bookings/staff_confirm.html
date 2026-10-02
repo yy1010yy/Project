@@ -1,0 +1,40 @@
+{% extends "base.html" %}
+{% from "components/forms.html" import error, booking_steps %}
+{% block title %}
+  Review guest reservation · The Courtyard
+{% endblock %}
+{% block content %}
+  <section class="shell py-12 md:py-16">
+    {{ booking_steps('confirm', true) }}
+    <h1>Everything in place.</h1>
+    <p class="mt-5 mb-10 text-fern">Review the guest and room details before confirming.</p>
+    <div class="grid gap-10 lg:grid-cols-[1fr_1fr]">
+      <div>
+        <img class="aspect-[4/3] w-full object-cover" src="{{ url_for('dashboard.static', filename=site_images[room_stories[room_details.room_type].image].file) }}" alt="{{ site_images[room_stories[room_details.room_type].image].alt }}">
+        <h2 class="mt-7">{{ room_stories[room_details.room_type].name }}</h2>
+        <p class="mt-3 text-fern">Room {{ room_details.room_number }}</p>
+      </div>
+      <div>
+        <div class="mb-6 border-b border-stone pb-6">
+          <h2 class="text-3xl">{{ guest.username }}</h2>
+          <p class="mt-2 text-fern">{{ guest.email }}</p>
+          <a class="text-link mt-4 inline-block text-sm" href="{{ url_for('bookings.staff_existing_guest', room=room, checkin=checkin, checkout=checkout) }}">Choose another guest</a>
+        </div>
+        {% include "bookings/stay_summary.html" %}
+        <form method="post" action="{{ url_for('bookings.staff_create') }}" class="mt-7" data-api-form data-success="reservation">
+          {{ error() }}
+          <input type="hidden" name="room" value="{{ room }}">
+          <input type="hidden" name="checkin" value="{{ checkin }}">
+          <input type="hidden" name="checkout" value="{{ checkout }}">
+          <button class="button w-full" type="submit">Confirm guest reservation</button>
+        </form>
+        <section class="notice notice-success mt-7" data-success-panel hidden tabindex="-1">
+          <h3>Reservation confirmed.</h3>
+          <p class="mt-3 mb-5">The stay has been added to the reservation ledger.</p>
+          <a class="button" href="{{ url_for('dashboard.index') }}">Return to the daily ledger</a>
+        </section>
+        <a class="text-link mt-6 block text-sm" href="{{ url_for('rooms.rooms', check_in=checkin, check_out=checkout) }}">Back to room search</a>
+      </div>
+    </div>
+  </section>
+{% endblock %}

@@ -1,0 +1,29 @@
+{% extends "base.html" %}
+{% from "components/forms.html" import field, error %}
+{% block title %}
+  Log in · The Courtyard
+{% endblock %}
+{% block content %}
+  <div class="auth-layout">
+    <img class="auth-picture" src="{{ url_for('dashboard.static', filename=site_images.courtyard.file) }}" alt="{{ site_images.courtyard.alt }}">
+    <section class="auth-form">
+      <p class="mb-5 text-sm text-fern">A familiar welcome</p>
+      <h1>Come on in.</h1>
+      <p class="mb-8 mt-5 text-fern">Log in to find a room, see your reservations or begin your working day.</p>
+      {{ error(error_message|default('')) }}
+      <form method="post" action="{{ url_for('auth.login') }}" class="space-y-5">
+        {{ field('email', 'Email address', 'email', request.form.get('email', ''), 'email') }}
+        <div>
+          {{ field('password', 'Password', 'password', '', 'current-password') }}
+          <button class="mt-2 text-sm underline underline-offset-4" type="button" data-password-toggle="password" aria-controls="password" aria-pressed="false">Show password</button>
+        </div>
+        <button class="button w-full" type="submit">Log in</button>
+      </form>
+      <p class="mt-8 text-sm text-fern">
+        First visit?
+        <a class="text-link text-ink" href="{{ url_for('auth.register') }}">Create an account</a>
+        .
+      </p>
+    </section>
+  </div>
+{% endblock %}

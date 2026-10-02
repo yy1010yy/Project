@@ -1,0 +1,25 @@
+{% set details = room_details if room_details is defined else room %}
+{% set nights = checkin|stay_nights(checkout) %}
+<dl class="booking-meta">
+  <div>
+    <dt>Arrival</dt>
+    <dd>{{ checkin|pretty_date }}</dd>
+  </div>
+  <div>
+    <dt>Departure</dt>
+    <dd>{{ checkout|pretty_date }}</dd>
+  </div>
+  <div>
+    <dt>Length of stay</dt>
+    <dd>{{ nights }} {{ 'night' if nights == 1 else 'nights' }}</dd>
+  </div>
+  <div>
+    <dt>Nightly room rate</dt>
+    <dd>{{ details.room_price|money }}</dd>
+  </div>
+</dl>
+<div class="flex justify-between gap-6 border-b border-stone py-5">
+  <span>Room subtotal</span>
+  <strong class="font-display text-2xl font-normal">{{ (details.room_price * nights)|money }}</strong>
+</div>
+<p class="mt-3 text-xs text-fern">Room rate × nights. This reservation does not collect payment.</p>

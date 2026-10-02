@@ -1,0 +1,167 @@
+{% extends "base.html" %}
+{% from "components/forms.html" import error %}
+{% block title %}
+  Find a room · The Courtyard
+{% endblock %}
+{% block content %}
+  <section class="shell py-12 md:py-16">
+    <div class="page-heading">
+      <div>
+        <h1>
+          A room for
+          <br>
+          your kind of stay.
+        </h1>
+        <p>Choose your dates. We'll see what's ready for you.</p>
+      </div>
+      <p class="text-sm text-fern">All rates in Malaysian Ringgit.</p>
+    </div>
+    <form action="{{ url_for('rooms.rooms') }}" method="get" class="panel mb-10 grid gap-5 md:grid-cols-2 xl:grid-cols-[1fr_1fr_1fr_auto] md:items-end" data-room-search data-search-url="{{ url_for('rooms.search') }}" data-start-url="{{ url_for('bookings.start') }}">
+      <div class="field">
+        <label for="check_in">Arrival</label>
+        <input class="input" type="date" name="check_in" id="check_in" min="{{ today }}" value="{{ request.args.get('check_in', '') }}" required>
+      </div>
+      <div class="field">
+        <label for="check_out">Departure</label>
+        <input class="input" type="date" name="check_out" id="check_out" min="{{ today }}" value="{{ request.args.get('check_out', '') }}" required>
+      </div>
+      <div class="field">
+        <label for="roomType">Room type</label>
+        <select class="input" name="roomType" id="roomType">
+          <option value="">Any room type</option>
+          {% for key, story in room_stories.items() %}
+            <option value="{{ key }}" {% if request.args.get('roomType') == key %}selected{% endif %}>{{ story.name }}</option>
+          {% endfor %}
+        </select>
+      </div>
+      <button class="button" type="submit">Find available rooms</button>
+    </form>
+    <noscript>
+      <p class="notice">Room availability needs JavaScript. Please enable it in your browser to search and reserve a room.</p>
+    </noscript>
+    {{ error() }}
+    <p data-search-status class="mb-7 text-sm text-fern" aria-live="polite">Enter your arrival and departure dates to see available rooms.</p>
+    <div data-room-results aria-busy="false">
+    </div>
+    <div data-room-intro class="grid gap-8 md:grid-cols-2">
+      <figure>
+        <img class="aspect-[3/2] w-full object-cover" src="{{ url_for('dashboard.static', filename=site_images.room.file) }}" alt="{{ site_images.room.alt }}" width="1536" height="1024">
+        <figcaption class="mt-4 font-display text-2xl">A space to call your own.</figcaption>
+      </figure>
+      <div class="flex flex-col justify-center border-y border-stone py-8 md:px-8">
+        <h2>
+          Just the right
+          <br>
+          amount of room.
+        </h2>
+        <p class="mt-5 text-fern">Standard, deluxe, family and business suite options. Available rooms and nightly prices come straight from our reservation book.</p>
+      </div>
+    </div>
+    {% if session.get('role') in ('receptionist', 'manager') %}
+      <section class="mt-16" id="room-inventory">
+        <div class="mb-7 flex flex-wrap items-end justify-between gap-4">
+          <div>
+            <h2>Room inventory</h2>
+            <p class="mt-3 text-sm text-fern">Keep room condition and nightly rates up to date.</p>
+          </div>
+          <button class="button button-secondary" type="button" data-dialog-open="add-room">Add a room</button>
+        </div>
+        {% if inventory %}
+          <div class="table-wrap" tabindex="0" role="region" aria-label="Room inventory">
+            <table class="ledger">
+              <caption class="sr-only">Rooms, conditions and nightly rates</caption>
+              <thead>
+                <tr>
+                  <th scope="col">Room</th>
+                  <th scope="col">Type</th>
+                  <th scope="col">Condition</th>
+                  <th scope="col">Nightly rate</th>
+                  <th scope="col">Edit</th>
+                </tr>
+              </thead>
+              <tbody>
+                {% for room in inventory %}
+                  <tr>
+                    <td>{{ room.room_number }}</td>
+                    <td>{{ room.room_type|title }}</td>
+                    <td>
+                      <span class="status status-{{ room.room_physical_status|replace(' ', '-') }}">{{ room.room_physical_status|capitalize }}</span>
+                    </td>
+                    <td>{{ room.room_price|money }}</td>
+                    <td>
+                      <button class="text-link" type="button" data-dialog-open="edit-room-{{ room.id }}" aria-label="Edit room {{ room.room_number }}">Edit room</button>
+                    </td>
+                  </tr>
+                {% endfor %}
+              </tbody>
+            </table>
+          </div>
+        {% else %}
+          <div class="empty">
+            <h3>No rooms in the inventory</h3>
+            <p>Add the first room to make it available for reservations.</p>
+          </div>
+        {% endif %}
+        <dialog id="add-room" class="m-auto w-[calc(100%-2rem)] max-w-[560px] bg-paper p-7 text-ink backdrop:bg-ink/40">
+          <div class="mb-6 flex items-start justify-between gap-5">
+            <h2 class="text-3xl">Add a room</h2>
+            <button class="text-link text-sm" type="button" data-dialog-close>Close</button>
+          </div>
+          <form action="{{ url_for('rooms.add_rooms') }}" method="post" class="space-y-4" data-api-form data-success="reload">
+            {{ error() }}
+            <div class="field">
+              <label for="room_number">Room number</label>
+              <input class="input" type="number" min="1" step="1" name="room_number" id="room_number" required>
+            </div>
+            <div class="field">
+              <label for="room_type">Room type</label>
+              <select class="input" id="room_type" name="room_type">
+                {% for key, story in room_stories.items() %}
+                  <option value="{{ key }}">{{ story.name }}</option>
+                {% endfor %}
+              </select>
+            </div>
+            <div class="field">
+              <label for="room_status">Condition</label>
+              <select class="input" name="room_status" id="room_status">
+                {% for status in ['clean', 'dirty', 'maintenance', 'out of service'] %}
+                  <option value="{{ status }}">{{ status|capitalize }}</option>
+                {% endfor %}
+              </select>
+            </div>
+            <div class="field">
+              <label for="room_price">Nightly rate (RM)</label>
+              <input class="input" type="number" min="0" step="0.01" name="room_price" id="room_price" required>
+            </div>
+            <button class="button" type="submit">Add room</button>
+          </form>
+        </dialog>
+        {% for room in inventory %}
+          <dialog id="edit-room-{{ room.id }}" class="m-auto w-[calc(100%-2rem)] max-w-[560px] bg-paper p-7 text-ink backdrop:bg-ink/40">
+            <div class="mb-6 flex items-start justify-between gap-5">
+              <h2 class="text-3xl">Room {{ room.room_number }}</h2>
+              <button class="text-link text-sm" type="button" data-dialog-close>Close</button>
+            </div>
+            <form action="{{ url_for('rooms.edit_rooms', room_id=room.id) }}" method="post" class="space-y-4" data-api-form data-success="reload">
+              {{ error() }}
+              <div class="field">
+                <label for="status-{{ room.id }}">Condition</label>
+                <select class="input" name="room_status" id="status-{{ room.id }}">
+                  {% for status in ['clean', 'dirty', 'maintenance', 'out of service'] %}
+                    <option value="{{ status }}" {% if room.room_physical_status == status %}selected{% endif %}>{{ status|capitalize }}</option>
+                  {% endfor %}
+                </select>
+              </div>
+              <div class="field">
+                <label for="price-{{ room.id }}">Nightly rate (RM)</label>
+                <input class="input" type="number" min="0" step="0.01" name="room_price" id="price-{{ room.id }}" value="{{ room.room_price }}" required>
+              </div>
+              <button class="button" type="submit">Save room changes</button>
+            </form>
+          </dialog>
+        {% endfor %}
+      </section>
+    {% endif %}
+  </section>
+  <script type="application/json" id="room-presentation">{"images": {{ site_images|tojson }}, "stories": {{ room_stories|tojson }}, "assetBase": {{ url_for('dashboard.static', filename='')|tojson }}}</script>
+{% endblock %}

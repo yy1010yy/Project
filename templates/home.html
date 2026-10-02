@@ -1,0 +1,54 @@
+{% extends "base.html" %}
+{% block title %}
+  A quieter kind of stay · The Courtyard
+{% endblock %}
+{% block content %}
+  <section class="shell grid items-center gap-10 pb-12 pt-10 lg:grid-cols-[.9fr_1.1fr] lg:gap-14 lg:pb-20 lg:pt-16">
+    <div class="py-4 lg:py-10">
+      <p class="mb-7 text-sm text-fern">Welcome to The Courtyard</p>
+      <h1 class="max-w-[8ch] text-[clamp(3.7rem,7.5vw,7rem)]">A quieter kind of stay.</h1>
+      <p class="mt-8 max-w-[36ch] text-lg text-fern">Set down your bags. Find a shady corner. Make a little space for a slower day.</p>
+      <div class="mt-9 flex flex-wrap items-center gap-6">
+        <a class="button" href="{{ url_for('auth.login') }}">Log in to find your room</a>
+        <a class="text-link text-sm" href="#our-house">Come inside</a>
+      </div>
+      <p class="mt-5 text-xs text-fern">
+        New here?
+        <a class="underline underline-offset-4" href="{{ url_for('auth.register') }}">Create a guest account</a>
+        to plan your stay.
+      </p>
+    </div>
+    <figure>
+      <img class="aspect-[5/6] max-h-[660px] w-full object-cover" src="{{ url_for('dashboard.static', filename=site_images.courtyard.file) }}" alt="{{ site_images.courtyard.alt }}" fetchpriority="high" width="1024" height="1536">
+      <figcaption class="mt-3 flex justify-between gap-4 text-xs text-fern">
+        <span>A place to linger</span>
+        <span>The Courtyard, Malaysia</span>
+      </figcaption>
+    </figure>
+  </section>
+  <section id="our-house" class="border-y border-stone bg-stone/20 py-16 md:py-24">
+    <div class="shell grid gap-10 md:grid-cols-[1fr_1.2fr] md:gap-24">
+      <h2 class="max-w-[12ch]">
+        Good company.
+        <br>
+        A room of your own.
+      </h2>
+      <div>
+        <p class="text-lg leading-relaxed">The best part of being away is finding somewhere you feel at ease. Our little house brings together quiet rooms, warm corners and the simple pleasure of having nowhere to rush.</p>
+        <p class="mt-6 text-fern">Take a look around, then sign in to explore available rooms and choose the dates that suit you.</p>
+      </div>
+    </div>
+  </section>
+  <section class="shell grid items-center gap-10 py-16 md:grid-cols-2 md:gap-20 md:py-24">
+    <img class="aspect-[4/3] w-full object-cover" src="{{ url_for('dashboard.static', filename=site_images.room.file) }}" alt="{{ site_images.room.alt }}" loading="lazy" width="1536" height="1024">
+    <div>
+      <h2>
+        Settle in,
+        <br>
+        at your own pace.
+      </h2>
+      <p class="mt-6 text-fern">Whether you're passing through or taking a few days for yourself, there's a place to begin. Your account keeps your reservations together, so the practical details are easy to find.</p>
+      <a class="button button-secondary mt-8" href="{{ url_for('auth.register') }}">Create your guest account</a>
+    </div>
+  </section>
+{% endblock %}

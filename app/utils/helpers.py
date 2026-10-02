@@ -1,4 +1,4 @@
-from flask import redirect, request, session, url_for
+from flask import abort, redirect, request, session, url_for
 from functools import wraps
 import re
 import string
@@ -55,7 +55,7 @@ def role_required(*allowed_roles):
                 return response
 
             if session.get("role") not in allowed_roles:
-                return "Forbidden", 403
+                abort(403)
 
             return base_func(*args, **kwargs)
 

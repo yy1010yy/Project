@@ -1,0 +1,55 @@
+{% extends "base.html" %}
+{% from "components/forms.html" import booking_steps %}
+{% block title %}
+  Find a guest · The Courtyard
+{% endblock %}
+{% block content %}
+  <section class="shell max-w-[1000px] py-12 md:py-16">
+    {{ booking_steps('guest', true) }}
+    <h1>A familiar face.</h1>
+    <p class="mt-5 mb-8 text-fern">Search by name or email address, then choose the guest for this reservation.</p>
+    <form method="post" action="{{ url_for('bookings.staff_existing_guest', room=room, checkin=checkin, checkout=checkout) }}" class="mb-8 flex flex-col gap-4 sm:flex-row sm:items-end">
+      <input type="hidden" name="action" value="search">
+      <div class="field flex-1">
+        <label for="query">Guest name or email</label>
+        <input class="input" id="query" name="query" type="search" value="{{ query }}" required autofocus>
+      </div>
+      <button class="button" type="submit">Find guest</button>
+    </form>
+    {% if guests %}
+      <div class="table-wrap" tabindex="0" role="region" aria-label="Guest search results">
+        <table class="ledger">
+          <caption class="sr-only">Matching guest accounts</caption>
+          <thead>
+            <tr>
+              <th scope="col">Name</th>
+              <th scope="col">Email</th>
+              <th scope="col">Choose guest</th>
+            </tr>
+          </thead>
+          <tbody>
+            {% for guest in guests %}
+              <tr>
+                <td>{{ guest.username }}</td>
+                <td>{{ guest.email }}</td>
+                <td>
+                  <form method="post" action="{{ url_for('bookings.staff_existing_guest', room=room, checkin=checkin, checkout=checkout) }}">
+                    <input type="hidden" name="action" value="select">
+                    <input type="hidden" name="guest_id" value="{{ guest.id }}">
+                    <button class="text-link" type="submit" aria-label="Select {{ guest.username }}">Select guest</button>
+                  </form>
+                </td>
+              </tr>
+            {% endfor %}
+          </tbody>
+        </table>
+      </div>
+    {% elif query %}
+      <div class="empty">
+        <h3>No matching guests</h3>
+        <p>Try another name or email address, or create a guest account.</p>
+      </div>
+    {% endif %}
+    <a class="text-link mt-8 inline-block text-sm" href="{{ url_for('bookings.staff_new_guest', room=room, checkin=checkin, checkout=checkout) }}">Create a new guest instead</a>
+  </section>
+{% endblock %}

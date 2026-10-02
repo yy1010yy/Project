@@ -1,4 +1,4 @@
-from flask import flash, jsonify, render_template, request
+from flask import flash, jsonify, render_template, request, session
 
 from app.db import get_db
 from app.utils.helpers import login_required, role_required
@@ -18,7 +18,10 @@ ALLOWED_TYPES = ["standard", "deluxe", "family", "business suite"]
 def rooms():
 
     # homepage to search for rooms
-    return render_template("rooms/index.html")
+    inventory = []
+    if session.get("role") in ("receptionist", "manager"):
+        inventory = get_db().execute("SELECT * FROM rooms ORDER BY room_number").fetchall()
+    return render_template("rooms/index.html", inventory=inventory)
 
 
 

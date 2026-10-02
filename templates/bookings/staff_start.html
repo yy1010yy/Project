@@ -1,0 +1,30 @@
+{% extends "base.html" %}
+{% from "components/forms.html" import booking_steps %}
+{% block title %}
+  Choose a guest · The Courtyard
+{% endblock %}
+{% block content %}
+  <section class="shell max-w-[1000px] py-12 md:py-16">
+    {{ booking_steps('guest', true) }}
+    <h1>
+      Who's staying
+      <br>
+      with us?
+    </h1>
+    <p class="mt-5 mb-8 text-fern">Choose an existing guest or create an account for someone new.</p>
+    <p class="mb-8 text-sm">{{ checkin|pretty_date }} to {{ checkout|pretty_date }}</p>
+    <form action="{{ url_for('bookings.staff_start', room=room, checkin=checkin, checkout=checkout) }}" method="post" class="grid gap-7 md:grid-cols-2">
+      <div class="panel">
+        <h2 class="text-3xl">A familiar face.</h2>
+        <p class="mt-4 mb-7 text-fern">Find a guest by their name or email address, then select their account.</p>
+        <button class="button" type="submit" name="guest_type" value="existing">Find an existing guest</button>
+      </div>
+      <div class="panel">
+        <h2 class="text-3xl">A first-time visitor.</h2>
+        <p class="mt-4 mb-7 text-fern">Create a guest account with a temporary password to share with them.</p>
+        <button class="button button-secondary" type="submit" name="guest_type" value="new">Create a new guest</button>
+      </div>
+    </form>
+    <a class="text-link mt-8 inline-block text-sm" href="{{ url_for('rooms.rooms', check_in=checkin, check_out=checkout) }}">Back to room search</a>
+  </section>
+{% endblock %}

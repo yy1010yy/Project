@@ -1,0 +1,33 @@
+{% extends "base.html" %}
+{% from "components/forms.html" import error, booking_steps %}
+{% block title %}
+  Review your reservation · The Courtyard
+{% endblock %}
+{% block content %}
+  <section class="shell py-12 md:py-16">
+    {{ booking_steps('confirm') }}
+    <h1>Make it your stay.</h1>
+    <p class="mt-5 mb-10 text-fern">Take a moment to check the details before confirming.</p>
+    <div class="grid items-start gap-10 lg:grid-cols-[1.15fr_1fr]">
+      <img class="aspect-[4/3] w-full object-cover" src="{{ url_for('dashboard.static', filename=site_images[room_stories[room.room_type].image].file) }}" alt="{{ site_images[room_stories[room.room_type].image].alt }}">
+      <div>
+        <h2>{{ room_stories[room.room_type].name }}</h2>
+        <p class="mt-3 mb-6 text-fern">Room {{ room.room_number }}</p>
+        {% include "bookings/stay_summary.html" %}
+        <form action="{{ url_for('bookings.guest_create') }}" method="post" class="mt-7" data-api-form data-success="reservation">
+          {{ error() }}
+          <input type="hidden" name="room_id" value="{{ room.id }}">
+          <input type="hidden" name="checkin" value="{{ checkin }}">
+          <input type="hidden" name="checkout" value="{{ checkout }}">
+          <button class="button w-full" type="submit">Confirm reservation</button>
+          <a class="text-link mt-5 block text-center text-sm" href="{{ url_for('rooms.rooms', check_in=checkin, check_out=checkout, roomType=room.room_type) }}">Choose another room</a>
+        </form>
+        <section class="notice notice-success mt-7" data-success-panel hidden tabindex="-1">
+          <h3>You're booked in.</h3>
+          <p class="mt-3 mb-5">Your reservation is confirmed. We look forward to welcoming you.</p>
+          <a class="button" href="{{ url_for('dashboard.guest_dashboard') }}">View my reservations</a>
+        </section>
+      </div>
+    </div>
+  </section>
+{% endblock %}

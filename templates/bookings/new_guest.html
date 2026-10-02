@@ -1,0 +1,30 @@
+{% extends "base.html" %}
+{% from "components/forms.html" import field, error, booking_steps %}
+{% block title %}
+  Create a guest · The Courtyard
+{% endblock %}
+{% block content %}
+  <section class="shell max-w-[760px] py-12 md:py-16">
+    {{ booking_steps('guest', true) }}
+    <h1>
+      A first-time
+      <br>
+      visitor.
+    </h1>
+    <p class="mt-5 mb-8 text-fern">Create their account, then share the temporary password with the guest. They'll choose a new password when they first log in.</p>
+    <form method="post" action="{{ url_for('auth.quick_register') }}" class="space-y-5" data-api-form data-success="credentials">
+      {{ error() }}{{ field('username', 'Guest name', 'text', '', 'name') }}{{ field('email', 'Guest email address', 'email', '', 'email') }}
+      <button class="button" type="submit">Create guest account</button>
+    </form>
+    <section class="panel mt-8" data-success-panel hidden tabindex="-1">
+      <h2 class="text-3xl">Their account is ready.</h2>
+      <p class="mt-4 text-fern">Share this temporary password with the guest before continuing.</p>
+      <p class="my-5 break-all border border-stone bg-white/50 p-4 font-mono" data-temporary-password>
+      </p>
+      <button class="text-link text-sm mb-6" type="button" data-copy-password>Copy temporary password</button>
+      <p class="hint mb-4" data-copy-status aria-live="polite">
+      </p>
+      <a class="button block" href="{{ url_for('bookings.staff_confirm', room=room, checkin=checkin, checkout=checkout) }}">Review the reservation</a>
+    </section>
+  </section>
+{% endblock %}

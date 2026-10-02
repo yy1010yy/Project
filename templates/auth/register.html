@@ -1,0 +1,24 @@
+{% extends "base.html" %}
+{% from "components/forms.html" import field, error %}
+{% block title %}
+  Create an account · The Courtyard
+{% endblock %}
+{% block content %}
+  <div class="auth-layout">
+    <img class="auth-picture" src="{{ url_for('dashboard.static', filename=site_images.room.file) }}" alt="{{ site_images.room.alt }}">
+    <section class="auth-form">
+      <h1>Your next stay starts here.</h1>
+      <p class="mb-8 mt-5 text-fern">Create a guest account to explore rooms and keep your reservations in one place.</p>
+      {{ error(error_message|default('')) }}
+      <form method="post" action="{{ url_for('auth.register') }}" class="space-y-5" data-password-confirm>
+        {{ field('username', 'Your name', 'text', request.form.get('username', ''), 'name') }}{{ field('email', 'Email address', 'email', request.form.get('email', ''), 'email') }}{{ field('password', 'Password', 'password', '', 'new-password') }}{{ field('confirm_password', 'Confirm password', 'password', '', 'new-password') }}
+        <button class="button w-full" type="submit">Create guest account</button>
+      </form>
+      <p class="mt-8 text-sm text-fern">
+        Already have an account?
+        <a class="text-link text-ink" href="{{ url_for('auth.login') }}">Log in</a>
+        .
+      </p>
+    </section>
+  </div>
+{% endblock %}

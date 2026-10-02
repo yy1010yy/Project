@@ -9,6 +9,10 @@ import sqlite3
 from . import auth_bp
 
 
+def _form_error(template, message, status_code):
+    return render_template(template, error_message=message), status_code
+
+
 
 @auth_bp.route("/login", methods=["GET", "POST"])
 def login():
@@ -25,13 +29,13 @@ def login():
 
         # check for empty input fields
         if not email:
-            return "error: must provide email", 400
+            return _form_error("auth/login.html", "Enter your email address.", 400)
         if not password:
-            return "error: must provide password", 400
+            return _form_error("auth/login.html", "Enter your password.", 400)
 
         # validify email
         if not isValidEmail(email):
-            return "error: invalid email format", 400
+            return _form_error("auth/login.html", "Enter a valid email address.", 400)
 
         # query database for user
         db = get_db()
@@ -39,7 +43,7 @@ def login():
 
         # ensure user's email exists and password is correct
         if len(user_details) != 1 or not check_password_hash(user_details[0]["hashed_password"], password):
-            return "error: invalid password or email", 401
+            return _form_error("auth/login.html", "The email or password is incorrect.", 401)
 
 
 
@@ -95,21 +99,21 @@ def register():
 
         # check for empty input fields
         if not username or username.strip() == "":
-            return "error: must provide username", 400
+            return _form_error("auth/register.html", "Enter your name.", 400)
         if not email:
-            return "error: must provide email", 400
+            return _form_error("auth/register.html", "Enter your email address.", 400)
         if not password:
-            return "error: must provide password", 400
+            return _form_error("auth/register.html", "Choose a password.", 400)
         if not confirm_password:
-            return "error: must confirm password", 400
+            return _form_error("auth/register.html", "Confirm your password.", 400)
 
         # checks email validity
         if not isValidEmail(email):
-            return "error: invalid email format", 400
+            return _form_error("auth/register.html", "Enter a valid email address.", 400)
 
         # ensure password matches:
         if password != confirm_password:
-            return "error: passwords do not match", 400
+            return _form_error("auth/register.html", "The passwords do not match.", 400)
 
         # makes DB connection
         db = get_db()
@@ -117,8 +121,7 @@ def register():
         # checks for duplicate email
         existing_user = db.execute("SELECT * FROM users WHERE email = ?", (email,)).fetchone()
         if existing_user:
-            flash("email already registered")
-            return "error: email already registered", 409
+            return _form_error("auth/register.html", "An account with this email already exists. Please log in.", 409)
 
         # hash submitted password
         hashed_password = generate_password_hash(password)
