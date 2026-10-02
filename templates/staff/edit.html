@@ -1,0 +1,29 @@
+{% extends "base.html" %}
+{% from "components/forms.html" import field, error %}
+{% block title %}
+  Edit team member · The Courtyard
+{% endblock %}
+{% block content %}
+  <section class="shell max-w-[760px] py-12 md:py-16">
+    <a class="text-link mb-7 inline-block text-sm" href="{{ url_for('staff.staff_list') }}">Back to our team</a>
+    <h1>Keep in touch.</h1>
+    <p class="mt-5 mb-8 text-fern">Update the account details for {{ staff.employee_id }}.</p>
+    <form method="post" action="{{ url_for('staff.edit_staff', employee_id=staff.employee_id) }}" class="space-y-5" data-api-form data-success="saved">
+      {{ error() }}{{ field('username', 'Team member name', 'text', staff.username, 'name') }}{{ field('email', 'Email address', 'email', staff.email, 'email') }}
+      <div class="field">
+        <label for="role">Role</label>
+        <select class="input" id="role" name="role">
+          {% for role in ['receptionist', 'manager', 'housekeeper'] %}
+            <option value="{{ role }}" {% if staff.role == role %}selected{% endif %}>{{ role|capitalize }}</option>
+          {% endfor %}
+        </select>
+      </div>
+      <button class="button" type="submit">Save staff details</button>
+    </form>
+    <div class="notice notice-success mt-7" data-success-panel hidden tabindex="-1">
+      Staff details saved.
+      <a class="text-link" href="{{ url_for('staff.staff_list') }}">Return to our team</a>
+      .
+    </div>
+  </section>
+{% endblock %}
