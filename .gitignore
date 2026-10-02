@@ -1,4 +1,6 @@
 # database
+node_modules/
+.preview/
 *.db
 *.db-journal
 *.db-wal

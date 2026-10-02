@@ -1,0 +1,12 @@
+{
+  "name": "the-courtyard-frontend",
+  "private": true,
+  "scripts": {
+    "build:css": "tailwindcss -i ./frontend/styles.css -o ./static/css/site.css --minify",
+    "watch:css": "tailwindcss -i ./frontend/styles.css -o ./static/css/site.css --watch"
+  },
+  "devDependencies": {
+    "@tailwindcss/cli": "^4.3.0",
+    "tailwindcss": "^4.3.0"
+  }
+}

@@ -1,0 +1,21 @@
+{% macro field(name, label, type="text", value="", autocomplete="", required=true, hint="") %}
+  <div class="field">
+    <label for="{{ name }}">{{ label }}</label>
+    <input class="input" id="{{ name }}" name="{{ name }}" type="{{ type }}" value="{{ value }}" {% if autocomplete %}autocomplete="{{ autocomplete }}"{% endif %} {% if required %}required{% endif %} {% if hint %}aria-describedby="{{ name }}-hint"{% endif %}>
+    {% if hint %}
+      <p id="{{ name }}-hint" class="hint">{{ hint }}</p>
+    {% endif %}
+  </div>
+{% endmacro %}
+{% macro error(message="") %}
+  <div class="notice notice-error" role="alert" data-form-error {% if not message %}hidden{% endif %}>{{ message }}</div>
+{% endmacro %}
+{% macro booking_steps(active, staff=false) %}
+  <nav class="steps" aria-label="Booking progress">
+    <span>Choose a room</span>
+    {% if staff %}
+      <span {% if active == 'guest' %}aria-current="step"{% endif %}>Choose a guest</span>
+    {% endif %}
+    <span {% if active == 'confirm' %}aria-current="step"{% endif %}>Review your reservation</span>
+  </nav>
+{% endmacro %}

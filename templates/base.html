@@ -1,0 +1,47 @@
+<!doctype html>
+<html lang="en-MY">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <meta name="theme-color" content="#343c30">
+  <meta name="description" content="The Courtyard. A quiet, welcoming stay in Malaysia.">
+  <title>{% block title %}The Courtyard{% endblock %}</title>
+  <link rel="stylesheet" href="{{ url_for('dashboard.static', filename='css/site.css') }}">
+  <script src="{{ url_for('dashboard.static', filename='js/site.js') }}" defer></script>
+  {% block head %}{% endblock %}
+</head>
+<body>
+  <a href="#main" class="absolute -top-20 left-4 z-50 bg-ink px-5 py-3 text-paper focus:top-4">Skip to content</a>
+  <header class="relative border-b border-stone">
+    <div class="shell flex min-h-24 items-center justify-between gap-4">
+      <a class="flex items-center gap-4" href="{{ url_for('dashboard.index') }}" aria-label="The Courtyard home"><span class="tile-mark" aria-hidden="true"></span><span class="brand">The Courtyard<span class="mt-2 block font-sans text-xs tracking-normal">A quiet stay in Malaysia</span></span></a>
+      <button type="button" class="nav-link lg:hidden" aria-expanded="false" aria-controls="site-nav" data-menu-toggle>Menu</button>
+      <div id="site-nav" class="mobile-nav" data-open="false">
+        <nav class="flex items-center gap-7" aria-label="Main navigation">
+          {% if session.get('user_id') %}
+          <a class="nav-link" href="{{ url_for('dashboard.index') }}" {% if request.blueprint == 'dashboard' %}aria-current="page"{% endif %}>{{ 'My stay' if session.get('role') == 'guest' else 'Daily ledger' }}</a>
+          <a class="nav-link" href="{{ url_for('rooms.rooms') }}" {% if request.blueprint == 'rooms' %}aria-current="page"{% endif %}>Rooms</a>
+          {% if session.get('role') == 'manager' %}<a class="nav-link" href="{{ url_for('staff.staff_list') }}" {% if request.blueprint == 'staff' %}aria-current="page"{% endif %}>Our team</a>{% endif %}
+          <a class="nav-link" href="{{ url_for('auth.change_password') }}">Account</a>
+          <a class="nav-link" href="{{ url_for('auth.logout') }}">Log out</a>
+          {% else %}
+          <a class="nav-link" href="{{ url_for('dashboard.index') }}#our-house">Our house</a>
+          <a class="nav-link" href="{{ url_for('auth.login') }}">Log in</a>
+          <a class="button button-secondary" href="{{ url_for('auth.register') }}">Make yourself at home</a>
+          {% endif %}
+        </nav>
+      </div>
+    </div>
+  </header>
+  <main id="main" tabindex="-1">
+    {% with messages = get_flashed_messages(with_categories=true) %}{% if messages %}
+    <div class="shell pt-6" aria-live="polite">{% for category, message in messages %}<div class="notice {{ 'notice-error' if category == 'danger' else 'notice-success' if category == 'success' else '' }}">{{ message }}</div>{% endfor %}</div>
+    {% endif %}{% endwith %}
+    {% block content %}{% endblock %}
+  </main>
+  <footer class="mt-16 border-t border-stone py-9">
+    <div class="shell flex flex-col justify-between gap-5 text-sm text-fern md:flex-row md:items-center"><div><span class="font-display text-xl text-ink">The Courtyard</span><p class="mt-1">A little room to breathe.</p></div><div class="flex flex-wrap gap-6"><span>Malaysia · Prices in MYR</span><a class="text-link" href="{{ url_for('auth.login') if not session.get('user_id') else url_for('auth.change_password') }}">{{ 'Guest & staff login' if not session.get('user_id') else 'Account settings' }}</a></div></div>
+  </footer>
+  {% block scripts %}{% endblock %}
+</body>
+</html>

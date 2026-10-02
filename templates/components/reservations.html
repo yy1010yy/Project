@@ -1,0 +1,46 @@
+{% macro reservations_table(rows, staff=false, empty_title="No reservations yet", empty_text="Your reservations will appear here once a stay is confirmed.") %}
+  {% if rows %}
+    <div class="table-wrap" tabindex="0" role="region" aria-label="Reservation list">
+      <table class="ledger">
+        <caption class="sr-only">{{ 'Guest reservations' if staff else 'Your reservations' }}</caption>
+        <thead>
+          <tr>
+            <th scope="col">{{ 'Guest' if staff else 'Reservation' }}</th>
+            <th scope="col">Room</th>
+            <th scope="col">Arrival</th>
+            <th scope="col">Departure</th>
+            <th scope="col">Status</th>
+          </tr>
+        </thead>
+        <tbody>
+          {% for row in rows %}
+            <tr>
+              <td>
+                {% if staff %}
+                  <strong class="font-medium">{{ row.guest_name }}</strong>
+                  <span class="mt-1 block text-xs text-fern">{{ row.guest_email }}</span>
+                {% else %}
+                  <span>Reservation #{{ row.id }}</span>
+                {% endif %}
+              </td>
+              <td>
+                {{ row.room_type|title }}
+                <span class="mt-1 block text-xs text-fern">Room {{ row.room_number }}</span>
+              </td>
+              <td>{{ row.check_in_date|pretty_date }}</td>
+              <td>{{ row.check_out_date|pretty_date }}</td>
+              <td>
+                <span class="status status-{{ row.booking_status|replace(' ', '-') }}">{{ row.booking_status|capitalize }}</span>
+              </td>
+            </tr>
+          {% endfor %}
+        </tbody>
+      </table>
+    </div>
+  {% else %}
+    <div class="empty">
+      <h3>{{ empty_title }}</h3>
+      <p>{{ empty_text }}</p>
+    </div>
+  {% endif %}
+{% endmacro %}

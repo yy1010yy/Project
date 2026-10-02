@@ -1,0 +1,12 @@
+{% extends "base.html" %}
+{% block title %}
+  {{ code }} · The Courtyard
+{% endblock %}
+{% block content %}
+  <section class="shell max-w-[760px] py-20">
+    <p class="mb-5 text-sm text-fern">{{ code }}</p>
+    <h1>{{ 'This page is for another role.' if code == 403 else 'A little off the beaten path.' if code == 404 else 'Something interrupted your visit.' }}</h1>
+    <p class="mt-6 mb-8 text-fern">{{ 'Return to your homepage to find the tools available to you.' if code == 403 else 'We could not find that page. Your homepage is a good place to start.' if code == 404 else 'Please try again in a moment. Your previously saved reservations remain in the ledger.' }}</p>
+    <a class="button" href="{{ url_for('dashboard.index') }}">Return home</a>
+  </section>
+{% endblock %}
