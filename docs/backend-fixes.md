@@ -2,7 +2,8 @@
 
 This pass preserves the guest booking, staff booking, and staff-management steps.
 It leaves top-level `app/__init__.py`, housekeeper functionality, and the draft
-booking JavaScript unchanged. Frontend templates are still to be built.
+booking JavaScript unchanged. The subsequent frontend work is documented in
+[frontend.md](frontend.md), including an isolated local preview.
 
 ## Database
 
@@ -81,8 +82,9 @@ they do not verify a finished frontend. Coverage includes password replacement,
 role restrictions, staff editing/deactivation, both staff guest-selection paths,
 overlapping reservations, and concurrent booking submissions.
 
-The application still needs your app initialization and the planned production
-templates before it can be used in a browser. Blueprint registration, secret-key
+The application still needs your app initialization for its normal entry point.
+The frontend now provides production templates and a separate local preview.
+Blueprint registration, secret-key
 configuration, database initialization, and teardown registration belong in that
-initialization. The public hotel homepage will be added with the frontend; this
-backend pass retains the existing authenticated root dispatcher.
+initialization. The frontend adds the public hotel homepage while retaining the
+authenticated root dispatcher for signed-in users.

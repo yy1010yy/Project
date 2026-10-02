@@ -30,8 +30,8 @@ class RouteTestCase(unittest.TestCase):
         if "dashboard" not in self.blueprints:
             self.app.add_url_rule("/", endpoint="dashboard.index", view_func=lambda: "Home")
 
-        # The frontend is deferred. Exercise the route/template contract with
-        # explicit test templates rather than adding production placeholder pages.
+        # Backend tests isolate route contracts with minimal templates.
+        # FrontendTests replaces this loader to exercise the real pages.
         paths = (
             "auth/login.html", "auth/register.html", "auth/change_password.html",
             "rooms/index.html", "bookings/guest_confirm.html",
@@ -39,6 +39,7 @@ class RouteTestCase(unittest.TestCase):
             "bookings/staff_existing_user.html", "bookings/staff_confirm.html",
             "staff/staff.html", "staff/create.html", "staff/edit.html",
             "dashboard/guest.html", "dashboard/receptionist.html", "dashboard/manager.html",
+            "errors/error.html",
         )
         self.app.jinja_loader = DictLoader({path: "{{ error or '' }}" for path in paths})
         self.templates = []
