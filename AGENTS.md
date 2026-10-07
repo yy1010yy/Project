@@ -1,6 +1,10 @@
 # AGENTS.md
 
 
+## Reports
+- When reporting information to me, be concise. You are allowed to scacrifice grammar for concision
+
+
 ## Stack
 - Flask backend
 - SQLite
