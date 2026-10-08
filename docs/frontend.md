@@ -62,15 +62,26 @@ tax calculation has been added. Housekeeper working pages remain deferred.
 
 ## App factory integration
 
-`app/__init__.py` is untouched. The separate preview launcher makes the UI
-reviewable while initialization is being finished.
+`app/__init__.py` provides the normal Flask factory. Copy `.env.example` to `.env`
+and set `SECRET_KEY` to a freshly generated value using the command in the example.
+The local `.env` is ignored by Git. You can also set `SECRET_KEY` in the environment.
+Then run:
 
-The shared templates and `/assets` files are registered by `dashboard_bp`.
-That blueprint also registers shared template context, money/date filters and
-403/404 pages. Register `auth_bp`, `dashboard_bp`, `rooms_bp`, `bookings_bp` and
-`staff_bp` in the finished factory, configure its secret key and database, and
-register `close_db` for teardown. The preview launcher shows this integration
-without replacing the project's factory.
+```powershell
+./.venv/Scripts/python.exe -m flask --app app init-db
+./.venv/Scripts/python.exe -m flask --app app run --debug
+```
+
+`init-db` applies the existing schema to `app/database/hotel.db`, creating missing
+tables and employee counters without deleting existing rows. It is initial setup,
+not a migration for databases with an older schema. App startup does not initialize
+or seed the database. The separate preview launcher still uses its demo database.
+
+The factory registers all five feature blueprints and database teardown, configures
+Flask-Session with non-permanent filesystem sessions under ignored
+`instance/sessions`, and uses the shared templates. `dashboard_bp` supplies the
+`/assets` files, shared template context, money/date filters and 403/404 pages.
+The factory also registers the shared 500 page.
 
 ## Replaceable sample imagery
 
