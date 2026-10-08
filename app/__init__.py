@@ -22,6 +22,7 @@ def create_app(test_config=None):
         SESSION_FILE_DIR=str(Path(app.instance_path) / "sessions"),
         SESSION_PERMANENT=False,
         SESSION_COOKIE_HTTPONLY=True,
+        SESSION_COOKIE_SECURE = True,
         SESSION_COOKIE_SAMESITE="Lax",
     )
     if test_config is not None:
